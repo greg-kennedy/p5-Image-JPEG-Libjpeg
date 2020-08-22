@@ -27,6 +27,41 @@ our @EXPORT = qw(
 
 our $VERSION = '1.00';
 
+# Constants (replace T_ENUM from libjpeg)
+use constant {
+  JCS_UNKNOWN => 0,
+  JCS_GRAYSCALE => 1,
+  JCS_RGB => 2,
+  JCS_YCbCr => 3,
+  JCS_CMYK => 4,
+  JCS_YCCK => 5,
+};
+
+use constant {
+  JDCT_ISLOW => 0,
+  JDCT_IFAST => 1,
+  JDCT_FLOAT => 2,
+};
+
+use constant {
+  JDITHER_NONE => 0,
+  JDITHER_ORDERED => 1,
+  JDITHER_FS => 2,
+};
+
+# JPEG decompress defines
+use constant {
+  JPEG_SUSPENDED => 0,
+  JPEG_HEADER_OK => 1,
+  JPEG_HEADER_TABLES_ONLY => 2,
+};
+use constant {
+  JPEG_REACHED_SOS => 1,
+  JPEG_REACHED_EOI => 2,
+  JPEG_ROW_COMPLETED => 3,
+  JPEG_SCAN_COMPLETED => 4,
+};
+
 require XSLoader;
 XSLoader::load('Image::JPEG::Libjpeg', $VERSION);
 

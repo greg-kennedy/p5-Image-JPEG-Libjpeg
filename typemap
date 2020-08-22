@@ -1,0 +1,19 @@
+TYPEMAP
+Image::JPEG::Libjpeg::Decompress T_PTROBJ
+
+# this typedef can be overridden by the user for custom libjpeg builds
+#  but since it is not controlled by jconfig or jmorecfg, stick with T_UV
+JDIMENSION T_UV
+
+UINT8 T_U_CHAR
+UINT16 T_U_SHORT
+
+J_COLOR_SPACE T_ENUM
+J_DCT_METHOD T_ENUM
+J_DITHER_MODE T_ENUM
+
+JSAMPLE T_IV
+# arrays built of the previous object
+#JSAMPROW T_AVREF
+#JSAMPARRAY T_AVREF
+#JSAMPIMAGE T_AVREF
