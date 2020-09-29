@@ -98,7 +98,7 @@ sub read_JPEG_file
     # Here the array is only one element long, but you could ask for
     # more than one scanline at a time if that's more convenient.
 
-    my @scanline = $cinfo->read_scanlines();
+    my @scanline = $cinfo->read_scanlines(1);
     if (DEBUG) { print STDERR " . Read scanline (" . $cinfo->get_output_scanline() . "/" . $cinfo->get_output_height() . ")\n" }
 
     # Assume put_scanline_someplace wants a pointer and sample count.
