@@ -1,4 +1,5 @@
 TYPEMAP
+Image::JPEG::Libjpeg::Compress T_PTROBJ
 Image::JPEG::Libjpeg::Decompress T_PTROBJ
 
 # this typedef can be overridden by the user for custom libjpeg builds

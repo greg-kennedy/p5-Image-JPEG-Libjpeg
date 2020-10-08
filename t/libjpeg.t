@@ -7,10 +7,12 @@ use warnings;
 
 use autodie;
 
+use File::Temp qw( tempfile );
+
 use Test;
 BEGIN { plan tests => 5 };
+
 use Image::JPEG::Libjpeg;
-ok(1);
 
 #########################
 
@@ -58,34 +60,46 @@ sub read_bytes {
 sub compare
 {
   my ($a, $b) = @_;
-  die "First arg must be array reference" unless ref $a eq 'ARRAY';
-  die "Second arg must be array reference" unless ref $b eq 'ARRAY';
 
-  return -1 if (@$a < @$b);
-  return 1 if (@$a > @$b);
+  my $a_type = ref $a;
+  my $b_type = ref $b;
 
-  for my $i (0 .. $#$a)
-  {
-    my $val;
-    if (ref $a->[$i] eq 'ARRAY') {
-      # 2d array, check sub-rows
-      $val = compare($a->[$i], $b->[$i]);
-    } else {
-      $val = $a->[$i] <=> $b->[$i];
-    }
-    return $val if $val;
+  if ($a_type ne $b_type) {
+    die "Reference mismatch between $a_type and $b_type";
   }
-  return 0;
+
+  if ($a_type eq 'ARRAY') {
+    return -1 if (@$a < @$b);
+    return 1 if (@$a > @$b);
+
+    for my $i (0 .. $#$a)
+    {
+      my $val = compare($a->[$i], $b->[$i]);
+      return $val if $val;
+    }
+
+    return 0;
+  } else {
+    return $a cmp $b;
+  }
+}
+
+# READ A RAW BIN FILE
+sub read_bin
+{
+  my $filename = shift;
+  open my $fp, '<:raw', $filename or die "Failed to open input file: $!";
+  my $file_content = read_bytes($fp, -s $filename);
+  close $fp;
+
+  return $file_content;
 }
 
 # READ A PPM FILE
 sub read_ppm
 {
   my $filename = shift;
-  open my $fp, '<:raw', $filename or die "Failed to open input file: $!";
-  my $filesize = -s $filename;
-  my $file_content = read_bytes($fp, $filesize);
-  close $fp;
+  my $file_content = read_bin($filename);
 
   # parse PPM file
   if ($file_content =~ m/^(\S+)\s(\S+)\s(\S+)\s(\S+)\s(.+)$/s) {
@@ -94,7 +108,7 @@ sub read_ppm
     die "Unexpected color count $colors" unless $colors == 255;
 
     my $bpr = $width * 3;
-    my @image = map { [ unpack "C[$bpr]", $_ ] } unpack("(A[$bpr])*", $data);
+    my @image = unpack "(A[$bpr])*", $data;
     return \@image;
   } else {
     die "File does not seem to be in PPM format";
@@ -123,13 +137,14 @@ sub read_bmp
 
   # PALETTE
   my @palette;
+  my @vals;
   for my $i (0 .. $colors - 1)
   {
-    my @pxl = unpack 'C3x', read_bytes($fp, 4);
-    push @{$palette[2]}, $pxl[0];
-    push @{$palette[1]}, $pxl[1];
-    push @{$palette[0]}, $pxl[2];
+    ($vals[0][$i], $vals[1][$i], $vals[2][$i]) = unpack 'C3x', read_bytes($fp, 4);
   }
+  $palette[2] = pack 'C*', @{$vals[0]};
+  $palette[1] = pack 'C*', @{$vals[1]};
+  $palette[0] = pack 'C*', @{$vals[2]};
 
   # IMAGEDATA
   die "Data offset $dataOffset seems wrong" unless $dataOffset == tell($fp);
@@ -141,11 +156,37 @@ sub read_bmp
   # bmp stored upside-down...
   my @image;
   for (my $i = $height - 1; $i >= 0; $i --) {
-    my $buffer = read_bytes($fp, $rowlen);
-    $image[$i] = [ unpack "C[$width]", $buffer ];
+    $image[$i] = substr(read_bytes($fp, $rowlen), 0, $width);
   }
 
   return (\@image, \@palette);
+}
+
+sub cjpeg
+{
+  my $image = shift;
+
+  my ($fh, $filename) = tempfile('testXXXX', SUFFIX => '.jpg', TMPDIR => 1, UNLINK => 1);
+
+  my $cinfo = Image::JPEG::Libjpeg::Compress->new();
+
+  $cinfo->stdio_dest($fh);
+
+  $cinfo->set_image_height(scalar @{$image});
+  $cinfo->set_image_width(length($image->[0]) / 3);
+  $cinfo->set_input_components(3);
+  $cinfo->set_in_color_space(Image::JPEG::Libjpeg::JCS_RGB);
+
+  $cinfo->set_defaults();
+
+  $cinfo->start_compress();
+  while ( (my $i = $cinfo->get_next_scanline()) < $cinfo->get_image_height()) {
+    $cinfo->write_scanlines( $image->[ $i ] );
+  }
+  $cinfo->finish_compress();
+  close($fh);
+
+  return $filename;
 }
 
 sub djpeg
@@ -184,12 +225,12 @@ sub djpeg
   return \@image;
 }
 
+my $ppm = read_ppm('t/testimg.ppm');
 # TEST 1
 {
   #        ./djpeg -dct int -ppm -outfile testout.ppm testorig.jpg
   # read JPG, compare PPM
   my $image = djpeg('t/testorig.jpg');
-  my $ppm = read_ppm('t/testimg.ppm');
   #        cmp testimg.ppm testout.ppm
   ok(compare($image, $ppm) == 0);
 }
@@ -205,19 +246,21 @@ sub djpeg
   # this tests using the color remapping of djpeg
   my ($image, $jpalette) = djpeg('t/testorig.jpg', 'quantize');
   my ($bmp, $bpalette) = read_bmp('t/testimg.bmp');
-#        cmp testimg.bmp testout.bmp
+  #        cmp testimg.bmp testout.bmp
   ok(compare($image, $bmp) == 0);
   ok(compare($jpalette, $bpalette) == 0);
 }
 
 # TEST 4
-#{
+{
   #        ./cjpeg -dct int -outfile testout.jpg testimg.ppm
   # attempt to compress ppm with cjpeg
-  #cjpeg(read_ppm('t/testimg.ppm'), 't/testout.jpg');
-#        cmp testimg.jpg testout.jpg
-#  print "hello";
-#}
+  my $filename = cjpeg($ppm);
+  my $image = read_bin($filename);
+  my $jpg = read_bin('t/testimg.jpg');
+  #        cmp testimg.jpg testout.jpg
+  ok($image eq $jpg);
+}
 
 # TEST 5
 {
@@ -225,7 +268,7 @@ sub djpeg
   # decompress progressive jpg to ppm and compare
   my $image = djpeg('t/testprog.jpg');
   my $ppm = read_ppm('t/testimg.ppm');
-#        cmp testimg.ppm testoutp.ppm
+  #        cmp testimg.ppm testoutp.ppm
   ok(compare($image, $ppm) == 0);
 }
 
