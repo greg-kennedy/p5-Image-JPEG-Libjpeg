@@ -5,11 +5,17 @@
 
 #include "ppport.h"
 
-// enable retrieval of libjpeg build options
+/* enable retrieval of libjpeg build options */
 #define JPEG_INTERNAL_OPTIONS
 
 #include <jpeglib.h>
 #include <jerror.h>
+
+/* Default error-management setup */
+/*
+struct jpeg_error_mgr * jpeg_std_error
+	(struct jpeg_error_mgr * err);
+*/
 
 typedef struct jpeg_compress_struct * Image__JPEG__Libjpeg__Compress;
 typedef struct jpeg_decompress_struct * Image__JPEG__Libjpeg__Decompress;
@@ -30,129 +36,93 @@ void
 get_config(...)
 PPCODE:
 	EXTEND( SP, 38 );
-	PUSHs( sv_2mortal( newSVpv("JPEG_LIB_VERSION", 16) ));
-	PUSHs( sv_2mortal( newSVuv( JPEG_LIB_VERSION ) ));
-	PUSHs( sv_2mortal( newSVpv("DCTSIZE", 7) ));
-	PUSHs( sv_2mortal( newSVuv( DCTSIZE ) ));
-	PUSHs( sv_2mortal( newSVpv("DCTSIZE2", 8) ));
-	PUSHs( sv_2mortal( newSVuv( DCTSIZE2 ) ));
-	PUSHs( sv_2mortal( newSVpv("NUM_QUANT_TBLS", 14) ));
-	PUSHs( sv_2mortal( newSVuv( NUM_QUANT_TBLS ) ));
-	PUSHs( sv_2mortal( newSVpv("NUM_HUFF_TBLS", 13) ));
-	PUSHs( sv_2mortal( newSVuv( NUM_HUFF_TBLS ) ));
-	PUSHs( sv_2mortal( newSVpv("NUM_ARITH_TBLS", 14) ));
-	PUSHs( sv_2mortal( newSVuv( NUM_ARITH_TBLS ) ));
-	PUSHs( sv_2mortal( newSVpv("MAX_COMPS_IN_SCAN", 17) ));
-	PUSHs( sv_2mortal( newSVuv( MAX_COMPS_IN_SCAN ) ));
-	PUSHs( sv_2mortal( newSVpv("MAX_SAMP_FACTOR", 15) ));
-	PUSHs( sv_2mortal( newSVuv( MAX_SAMP_FACTOR ) ));
-	PUSHs( sv_2mortal( newSVpv("C_MAX_BLOCKS_IN_MCU", 19) ));
-	PUSHs( sv_2mortal( newSVuv( C_MAX_BLOCKS_IN_MCU ) ));
-	PUSHs( sv_2mortal( newSVpv("D_MAX_BLOCKS_IN_MCU", 19) ));
-	PUSHs( sv_2mortal( newSVuv( D_MAX_BLOCKS_IN_MCU ) ));
-	PUSHs( sv_2mortal( newSVpv("JDCT_DEFAULT", 12) ));
-	PUSHs( sv_2mortal( newSVuv( JDCT_DEFAULT ) ));
-	PUSHs( sv_2mortal( newSVpv("JDCT_FASTEST", 12) ));
-	PUSHs( sv_2mortal( newSVuv( JDCT_FASTEST ) ));
-	PUSHs( sv_2mortal( newSVpv("JMSG_LENGTH_MAX", 15) ));
-	PUSHs( sv_2mortal( newSVuv( JMSG_LENGTH_MAX ) ));
-	PUSHs( sv_2mortal( newSVpv("JMSG_STR_PARM_MAX", 17) ));
-	PUSHs( sv_2mortal( newSVuv( JMSG_STR_PARM_MAX ) ));
-	PUSHs( sv_2mortal( newSVpv("BITS_IN_JSAMPLE", 15) ));
-	PUSHs( sv_2mortal( newSVuv( BITS_IN_JSAMPLE ) ));
-	PUSHs( sv_2mortal( newSVpv("MAX_COMPONENTS", 14) ));
-	PUSHs( sv_2mortal( newSVuv( MAX_COMPONENTS ) ));
-	PUSHs( sv_2mortal( newSVpv("MAXJSAMPLE", 10) ));
-	PUSHs( sv_2mortal( newSVuv( MAXJSAMPLE ) ));
-	PUSHs( sv_2mortal( newSVpv("CENTERJSAMPLE", 13) ));
-	PUSHs( sv_2mortal( newSVuv( CENTERJSAMPLE ) ));
-	PUSHs( sv_2mortal( newSVpv("JPEG_MAX_DIMENSION", 18) ));
-	PUSHs( sv_2mortal( newSVuv( JPEG_MAX_DIMENSION ) ));
+#define pushdef(x) PUSHs( sv_2mortal( newSVpv( #x, strlen( #x )) )); PUSHs( sv_2mortal( newSViv( x ) ));
+	pushdef( JPEG_LIB_VERSION );
+	pushdef( DCTSIZE );
+	pushdef( DCTSIZE2 );
+	pushdef( NUM_QUANT_TBLS );
+	pushdef( NUM_HUFF_TBLS );
+	pushdef( NUM_ARITH_TBLS );
+	pushdef( MAX_COMPS_IN_SCAN );
+	pushdef( MAX_SAMP_FACTOR );
+	pushdef( C_MAX_BLOCKS_IN_MCU );
+	pushdef( D_MAX_BLOCKS_IN_MCU );
+	pushdef( JDCT_DEFAULT );
+	pushdef( JDCT_FASTEST );
+	pushdef( JMSG_LENGTH_MAX );
+	pushdef( JMSG_STR_PARM_MAX );
+	pushdef( BITS_IN_JSAMPLE );
+	pushdef( MAX_COMPONENTS );
+	pushdef( MAXJSAMPLE );
+	pushdef( CENTERJSAMPLE );
+	pushdef( JPEG_MAX_DIMENSION );
+#define xpushdef(x) XPUSHs( sv_2mortal( newSVpv( #x, strlen( #x )) )); XPUSHs( sv_2mortal( newSViv( x ) ));
 #ifdef JPEG_LIB_VERSION_MAJOR
-	// added libjpeg8c
-	XPUSHs( sv_2mortal( newSVpv("JPEG_LIB_VERSION_MAJOR", 22) ));
-	XPUSHs( sv_2mortal( newSVuv( JPEG_LIB_VERSION_MAJOR ) ));
+	/* added libjpeg8c */
+	xpushdef( JPEG_LIB_VERSION_MAJOR );
 #endif
 #ifdef JPEG_LIB_VERSION_MINOR
-	// added libjpeg8c
-	XPUSHs( sv_2mortal( newSVpv("JPEG_LIB_VERSION_MINOR", 22) ));
-	XPUSHs( sv_2mortal( newSVuv( JPEG_LIB_VERSION_MINOR ) ));
+	/* added libjpeg8c */
+	xpushdef( JPEG_LIB_VERSION_MINOR );
 #endif
+#define xpushflag(x) XPUSHs( sv_2mortal( newSVpv( #x, strlen( #x )) )); XPUSHs( &PL_sv_yes );
 #ifdef DCT_ISLOW_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("DCT_ISLOW_SUPPORTED", 19) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( DCT_ISLOW_SUPPORTED );
 #endif
 #ifdef DCT_IFAST_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("DCT_IFAST_SUPPORTED", 19) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( DCT_IFAST_SUPPORTED );
 #endif
 #ifdef DCT_FLOAT_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("DCT_FLOAT_SUPPORTED", 19) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( DCT_FLOAT_SUPPORTED );
 #endif
 #ifdef C_ARITH_CODING_SUPPORTED
-	// enabled libjpeg7
-        XPUSHs( sv_2mortal( newSVpv("C_ARITH_CODING_SUPPORTED", 24) ));
-        XPUSHs( &PL_sv_yes );
+	/* enabled libjpeg7 */
+        xpushflag( C_ARITH_CODING_SUPPORTED );
 #endif
 #ifdef C_MULTISCAN_FILES_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("C_MULTISCAN_FILES_SUPPORTED", 27) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( C_MULTISCAN_FILES_SUPPORTED );
 #endif
 #ifdef C_PROGRESSIVE_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("C_PROGRESSIVE_SUPPORTED", 23) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( C_PROGRESSIVE_SUPPORTED );
 #endif
 #ifdef DCT_SCALING_SUPPORTED
-	// added libjpeg7
-        XPUSHs( sv_2mortal( newSVpv("DCT_SCALING_SUPPORTED", 21) ));
-        XPUSHs( &PL_sv_yes );
+	/* added libjpeg7 */
+        xpushflag( DCT_SCALING_SUPPORTED );
 #endif
 #ifdef ENTROPY_OPT_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("ENTROPY_OPT_SUPPORTED", 21) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( ENTROPY_OPT_SUPPORTED );
 #endif
 #ifdef INPUT_SMOOTHING_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("INPUT_SMOOTHING_SUPPORTED", 25) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( INPUT_SMOOTHING_SUPPORTED );
 #endif
 #ifdef D_ARITH_CODING_SUPPORTED
-	// enabled libjpeg7
-        XPUSHs( sv_2mortal( newSVpv("D_ARITH_CODING_SUPPORTED", 24) ));
-        XPUSHs( &PL_sv_yes );
+	/* enabled libjpeg7 */
+        xpushflag( D_ARITH_CODING_SUPPORTED );
 #endif
 #ifdef D_MULTISCAN_FILES_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("D_MULTISCAN_FILES_SUPPORTED", 27) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( D_MULTISCAN_FILES_SUPPORTED );
 #endif
 #ifdef D_PROGRESSIVE_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("D_PROGRESSIVE_SUPPORTED", 23) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( D_PROGRESSIVE_SUPPORTED );
 #endif
 #ifdef IDCT_SCALING_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("IDCT_SCALING_SUPPORTED", 22) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( IDCT_SCALING_SUPPORTED );
 #endif
 #ifdef SAVE_MARKERS_SUPPORTED
-	// added libjpeg6b
-        XPUSHs( sv_2mortal( newSVpv("SAVE_MARKERS_SUPPORTED", 22) ));
-        XPUSHs( &PL_sv_yes );
+	/* added libjpeg6b */
+        xpushflag( SAVE_MARKERS_SUPPORTED );
 #endif
 #ifdef BLOCK_SMOOTHING_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("BLOCK_SMOOTHING_SUPPORTED", 25) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( BLOCK_SMOOTHING_SUPPORTED );
 #endif
 #ifdef UPSAMPLE_MERGING_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("UPSAMPLE_MERGING_SUPPORTED", 26) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( UPSAMPLE_MERGING_SUPPORTED );
 #endif
 #ifdef QUANT_1PASS_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("QUANT_1PASS_SUPPORTED", 21) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( QUANT_1PASS_SUPPORTED );
 #endif
 #ifdef QUANT_2PASS_SUPPORTED
-        XPUSHs( sv_2mortal( newSVpv("QUANT_2PASS_SUPPORTED", 21) ));
-        XPUSHs( &PL_sv_yes );
+        xpushflag( QUANT_2PASS_SUPPORTED );
 #endif
 
  # Error handling setup should go here
@@ -162,13 +132,20 @@ PPCODE:
 int
 jpeg_quality_scaling(int quality)
 
-# client_data field in common ptrs not added until 6.2
+ # these aren't really useful: there are compress / decompress-specific routines
+ # void jpeg_abort (j_common_ptr cinfo);
+ # void jpeg_destroy (j_common_ptr cinfo);
+
+ # client_data field in common ptrs not added until 6.2
+
+ # ###########################################################################
+ # COMPRESSION STRUCTURE AND FUNCTIONS
+ # ###########################################################################
 
 MODULE = Image::JPEG::Libjpeg  PACKAGE = Image::JPEG::Libjpeg::Compress  PREFIX = jpeg_
 PROTOTYPES: DISABLE
 
  # ###########################################################################
- # COMPRESSION FUNCTIONS AND OBJECT
  # Compress struct accessors
 
  # ###########################################################################
@@ -868,14 +845,14 @@ void
 jpeg_default_colorspace (Image::JPEG::Libjpeg::Compress cinfo)
 
 void
-jpeg_set_quality (Image::JPEG::Libjpeg::Compress cinfo, int quality = 75, bool force_baseline = true)
+jpeg_set_quality (Image::JPEG::Libjpeg::Compress cinfo, int quality = 75, bool force_baseline = 1)
 
 void
-jpeg_set_linear_quality (Image::JPEG::Libjpeg::Compress cinfo, int scale_factor = 50, bool force_baseline = true)
+jpeg_set_linear_quality (Image::JPEG::Libjpeg::Compress cinfo, int scale_factor = 50, bool force_baseline = 1)
 
 #if JPEG_LIB_VERSION >= 70
 void
-jpeg_default_qtables (Image::JPEG::Libjpeg::Compress cinfo, bool force_baseline = true)
+jpeg_default_qtables (Image::JPEG::Libjpeg::Compress cinfo, bool force_baseline = 1)
 
 #endif
 
@@ -893,17 +870,17 @@ void
 jpeg_simple_progression (Image::JPEG::Libjpeg::Compress cinfo)
 
 void
-jpeg_suppress_tables (Image::JPEG::Libjpeg::Compress cinfo, bool suppress = true)
+jpeg_suppress_tables (Image::JPEG::Libjpeg::Compress cinfo, bool suppress = 1)
 
 #JQUANT_TBL * jpeg_alloc_quant_table (j_common_ptr cinfo);
 #JHUFF_TBL * jpeg_alloc_huff_table (j_common_ptr cinfo);
 # 9.4+
 #EXTERN(JHUFF_TBL *) jpeg_std_huff_table JPP((j_common_ptr cinfo,
-#					     boolean isDC, int tblno));
+#						boolean isDC, int tblno));
 #
 
 void
-jpeg_start_compress (Image::JPEG::Libjpeg::Compress cinfo, bool write_all_tables = true)
+jpeg_start_compress (Image::JPEG::Libjpeg::Compress cinfo, bool write_all_tables = 1)
 
 JDIMENSION
 jpeg_write_scanlines (Image::JPEG::Libjpeg::Compress cinfo, ...)
@@ -979,15 +956,24 @@ jpeg_write_coefficients (cinfo, coef_arrays)
 void
 jpeg_abort_compress (Image::JPEG::Libjpeg::Compress cinfo)
 
+ # ###########################################################################
+ # DECOMPRESSION STRUCTURE AND FUNCTIONS
+ # ###########################################################################
+
 MODULE = Image::JPEG::Libjpeg  PACKAGE = Image::JPEG::Libjpeg::Decompress  PREFIX = jpeg_
 PROTOTYPES: DISABLE
 
  # ###########################################################################
- # DECOMPRESSION FUNCTIONS AND OBJECT
  # Decompress struct accessors
 
  # ###########################################################################
  # Common fields
+
+ # struct jpeg_error_mgr * err;
+ # struct jpeg_memory_mgr * mem;
+ # struct jpeg_progress_mgr * progress;
+ # void * client_data; /* not added until 6b */
+
 bool
 get_is_decompressor(Image::JPEG::Libjpeg::Decompress cinfo)
 CODE:
@@ -999,6 +985,8 @@ get_global_state(Image::JPEG::Libjpeg::Decompress cinfo)
 CODE:
 	RETVAL = cinfo->global_state;
 OUTPUT:	RETVAL
+
+ # struct jpeg_source_mgr * src;
 
  # ###########################################################################
  # Produced by jpeg_read_header()
@@ -1138,6 +1126,7 @@ set_quantize_colors(Image::JPEG::Libjpeg::Decompress cinfo, bool quantize_colors
 CODE:
 	cinfo->quantize_colors = quantize_colors;
 
+ # the following are ignored if not quantize_colors:
 J_DITHER_MODE
 get_dither_mode(Image::JPEG::Libjpeg::Decompress cinfo)
 CODE:
@@ -1171,6 +1160,7 @@ set_desired_number_of_colors(Image::JPEG::Libjpeg::Decompress cinfo, int desired
 CODE:
 	cinfo->desired_number_of_colors = desired_number_of_colors;
 
+ # these are significant only in buffered-image mode:
 bool
 get_enable_1pass_quant(Image::JPEG::Libjpeg::Decompress cinfo)
 CODE:
@@ -1263,38 +1253,24 @@ PPCODE:
 void
 set_colormap(Image::JPEG::Libjpeg::Decompress cinfo, AV * colormap)
 PREINIT:
-	AV * jsamprow;
 	SV ** elem;
-	int actual_number_of_colors, num_components;
+	int num_components;
 	int i, j;
 CODE:
 	num_components = av_len(colormap) + 1;
-	//cinfo->num_components = num_components;
+	if (num_components != 3)
+		croak("libjpeg requires exactly 3 colormap components");
+	/* cinfo->num_components = num_components; */
 	Newx(cinfo->colormap, num_components, JSAMPROW);
 	for (i = 0; i<num_components; i++) {
 		elem = av_fetch(colormap, i, 0);
-		if (elem == NULL)
+		if (elem == NULL || ! SvOK(*elem) || ! SvPOK(*elem))
 			croak("param is not set (is null)");
-		if (! SvROK(*elem))
-			croak("param is not a reference");
-		if (SvTYPE( SvRV( *elem ) ) != SVt_PVAV )
-			croak("param is not an array reference");
-		jsamprow = (AV *)SvRV(*elem);
-		actual_number_of_colors = av_len(jsamprow) + 1;
-		cinfo->actual_number_of_colors = actual_number_of_colors;
-		Newx(cinfo->colormap[i], actual_number_of_colors, JSAMPLE);
-		for (j = 0; j < actual_number_of_colors; j ++) {
-			elem = av_fetch(jsamprow, j, 0);
-			if (elem == NULL) {
-				cinfo->colormap[i][j] = 0;
-			} else {
-				cinfo->colormap[i][j] = SvIV(*elem);
-			}
-		}
+		cinfo->colormap[i] = (JSAMPROW)SvPV_nolen(*elem);
 	}
 
  # ###########################################################################
- # In use during jpeg_read_scanlines
+ # State Variables - In use during jpeg_read_scanlines
 JDIMENSION
 get_output_scanline(Image::JPEG::Libjpeg::Decompress cinfo)
 CODE:
@@ -1325,12 +1301,13 @@ CODE:
 	RETVAL = cinfo->output_iMCU_row;
 OUTPUT:	RETVAL
 
+# TODO: TEST THIS
 void
 get_coef_bits(Image::JPEG::Libjpeg::Decompress cinfo)
 PREINIT:
 	AV * coef_bits;
 	int i, j;
-CODE:
+PPCODE:
 	if(cinfo->coef_bits == NULL)
 		XSRETURN_UNDEF;
 	EXTEND(SP, cinfo->out_color_components);
@@ -1339,26 +1316,101 @@ CODE:
 		av_extend(coef_bits, DCTSIZE2 - 1);
 		for (j = 0; j < DCTSIZE2; j++)
 			av_push(coef_bits, newSViv(cinfo->coef_bits[i][j]));
-		PUSHs( newRV_noinc(sv_2mortal((SV*)coef_bits) ) );
+		PUSHs( sv_2mortal( newRV_noinc((SV*)coef_bits) ) );
 	}
 
-#JQUANT_TBL *
-#get_quant_tbl_ptrs[NUM_QUANT_TBLS](Image::JPEG::Libjpeg::Decompress cinfo)
-#CODE:
-#	RETVAL = cinfo->quant_tbl_ptrs[NUM_QUANT_TBLS];
-#OUTPUT:#	RETVAL
+ # Internal JPEG parameters
+# TODO: TEST THIS
+void
+get_quant_tbls(Image::JPEG::Libjpeg::Decompress cinfo)
+PREINIT:
+	AV * quantval;
+	HV * jquant_tbl;
+	int i, j;
+PPCODE:
+	EXTEND(SP, NUM_QUANT_TBLS);
+	for (i = 0; i < NUM_QUANT_TBLS; i++) {
+		if ( cinfo->quant_tbl_ptrs[i] == NULL)
+			PUSHs(&PL_sv_undef);
+		else {
+			jquant_tbl = newHV();
+			hv_store(jquant_tbl, "sent_table", 10,
+				cinfo->quant_tbl_ptrs[i]->sent_table ? &PL_sv_yes : &PL_sv_no, 0 );
+			quantval = newAV();
+			av_extend(quantval, DCTSIZE2 - 1);
+			for (j = 0; j < DCTSIZE2; j++)
+				av_push(quantval, newSVuv(cinfo->quant_tbl_ptrs[i]->quantval[j]));
+			hv_store(jquant_tbl, "quantval", 8,
+				newRV_noinc((SV *)quantval), 0);
+			PUSHs( sv_2mortal( newRV_noinc( (SV*)jquant_tbl) ) );
+		}
+	}
 
-#JHUFF_TBL *
-#get_dc_huff_tbl_ptrs[NUM_HUFF_TBLS](Image::JPEG::Libjpeg::Decompress cinfo)
-#CODE:
-#	RETVAL = cinfo->dc_huff_tbl_ptrs[NUM_HUFF_TBLS];
-#OUTPUT:#	RETVAL
+# TODO: TEST THIS
+# TODO: Move this to a function (ac_ can use it too)
+void
+get_dc_huff_tbls(Image::JPEG::Libjpeg::Decompress cinfo)
+PREINIT:
+	AV * av;
+	HV * jhuff_tbl;
+	int i, j;
+PPCODE:
+	EXTEND(SP, NUM_HUFF_TBLS);
+	for (i = 0; i < NUM_HUFF_TBLS; i++) {
+		if ( cinfo->dc_huff_tbl_ptrs[i] == NULL)
+			PUSHs(&PL_sv_undef);
+		else {
+			jhuff_tbl = newHV();
+			hv_store(jhuff_tbl, "sent_table", 10,
+				cinfo->dc_huff_tbl_ptrs[i]->sent_table ? &PL_sv_yes : &PL_sv_no, 0);
+			av = newAV();
+			av_extend(av, 16);
+			for (j = 0; j < 17; j++)
+				av_push(av, newSVuv(cinfo->dc_huff_tbl_ptrs[i]->bits[j]));
+			hv_store(jhuff_tbl, "bits", 4,
+				newRV_noinc( (SV*) av ), 0);
+			av = newAV();
+			av_extend(av, 255);
+			for (j = 0; j < 256; j++)
+				av_push(av, newSVuv(cinfo->dc_huff_tbl_ptrs[i]->huffval[j]));
+			hv_store(jhuff_tbl, "huffval", 7,
+				newRV_noinc( (SV*) av ), 0);
+			PUSHs( sv_2mortal( newRV_noinc( (SV*)jhuff_tbl) ));
+		}
+	}
 
-#JHUFF_TBL *
-#get_ac_huff_tbl_ptrs[NUM_HUFF_TBLS](Image::JPEG::Libjpeg::Decompress cinfo)
-#CODE:
-#	RETVAL = cinfo->ac_huff_tbl_ptrs[NUM_HUFF_TBLS];
-#OUTPUT:#	RETVAL
+# TODO: TEST THIS
+# TODO: Move this to a function (ac_ can use it too)
+void
+get_ac_huff_tbls(Image::JPEG::Libjpeg::Decompress cinfo)
+PREINIT:
+	AV * av;
+	HV * jhuff_tbl;
+	int i, j;
+PPCODE:
+	EXTEND(SP, NUM_HUFF_TBLS);
+	for (i = 0; i < NUM_HUFF_TBLS; i++) {
+		if ( cinfo->ac_huff_tbl_ptrs[i] == NULL)
+			PUSHs(&PL_sv_undef);
+		else {
+			jhuff_tbl = newHV();
+			hv_store(jhuff_tbl, "sent_table", 10,
+				cinfo->ac_huff_tbl_ptrs[i]->sent_table ? &PL_sv_yes : &PL_sv_no, 0);
+			av = newAV();
+			av_extend(av, 16);
+			for (j = 0; j < 17; j++)
+				av_push(av, newSVuv(cinfo->ac_huff_tbl_ptrs[i]->bits[j]));
+			hv_store(jhuff_tbl, "bits", 4,
+				newRV_noinc( (SV*) av ), 0);
+			av = newAV();
+			av_extend(av, 255);
+			for (j = 0; j < 256; j++)
+				av_push(av, newSVuv(cinfo->ac_huff_tbl_ptrs[i]->huffval[j]));
+			hv_store(jhuff_tbl, "huffval", 7,
+				newRV_noinc( (SV*) av ), 0);
+			PUSHs( sv_2mortal( newRV_noinc( (SV*)jhuff_tbl) ));
+		}
+	}
 
 int
 get_data_precision(Image::JPEG::Libjpeg::Decompress cinfo)
@@ -1366,12 +1418,57 @@ CODE:
 	RETVAL = cinfo->data_precision;
 OUTPUT:	RETVAL
 
-=pod
-AV *
+# TODO: TEST THIS
+# TODO: Move this to a function
+void
 get_comp_info(Image::JPEG::Libjpeg::Decompress cinfo)
+PREINIT:
+	AV * quantval;
+	HV * comp_info, * quant_table;
+	int i, j;
 PPCODE:
-	RETVAL = cinfo->comp_info;
-=cut
+	if(cinfo->comp_info == NULL)
+		XSRETURN_UNDEF;
+	EXTEND(SP, cinfo->num_components);
+	for (i = 0; i < cinfo->num_components; i++) {
+		comp_info = newHV();
+		hv_store(comp_info, "component_id", 12, newSViv(cinfo->comp_info[i].component_id), 0);
+		hv_store(comp_info, "component_index", 15, newSViv(cinfo->comp_info[i].component_index), 0);
+		hv_store(comp_info, "h_samp_factor", 13, newSViv(cinfo->comp_info[i].h_samp_factor), 0);
+		hv_store(comp_info, "v_samp_factor", 13, newSViv(cinfo->comp_info[i].v_samp_factor), 0);
+		hv_store(comp_info, "quant_tbl_no", 12, newSViv(cinfo->comp_info[i].quant_tbl_no), 0);
+		hv_store(comp_info, "dc_tbl_no", 9, newSViv(cinfo->comp_info[i].dc_tbl_no), 0);
+		hv_store(comp_info, "ac_tbl_no", 9, newSViv(cinfo->comp_info[i].ac_tbl_no), 0);
+		hv_store(comp_info, "width_in_blocks", 15, newSVuv(cinfo->comp_info[i].ac_tbl_no), 0);
+		hv_store(comp_info, "height_in_blocks", 16, newSVuv(cinfo->comp_info[i].ac_tbl_no), 0);
+		hv_store(comp_info, "DCT_h_scaled_size", 17, newSViv(cinfo->comp_info[i].DCT_h_scaled_size), 0);
+		hv_store(comp_info, "DCT_v_scaled_size", 17, newSViv(cinfo->comp_info[i].DCT_v_scaled_size), 0);
+		hv_store(comp_info, "downsampled_width", 17, newSVuv(cinfo->comp_info[i].ac_tbl_no), 0);
+		hv_store(comp_info, "downsampled_height", 18, newSVuv(cinfo->comp_info[i].ac_tbl_no), 0);
+		hv_store(comp_info, "component_needed", 16,
+			cinfo->comp_info[i].component_needed ? &PL_sv_yes : &PL_sv_no, 0);
+		hv_store(comp_info, "MCU_width", 9, newSViv(cinfo->comp_info[i].MCU_width), 0);
+		hv_store(comp_info, "MCU_height", 10, newSViv(cinfo->comp_info[i].MCU_height), 0);
+		hv_store(comp_info, "MCU_blocks", 10, newSViv(cinfo->comp_info[i].MCU_blocks), 0);
+		hv_store(comp_info, "MCU_sample_width", 16, newSViv(cinfo->comp_info[i].MCU_sample_width), 0);
+		hv_store(comp_info, "last_col_width", 14, newSViv(cinfo->comp_info[i].last_col_width), 0);
+		hv_store(comp_info, "last_row_height", 15, newSViv(cinfo->comp_info[i].last_row_height), 0);
+		if ( cinfo->comp_info[i].quant_table != NULL)
+		{
+			quant_table = newHV();
+			hv_store(quant_table, "sent_table", 10,
+				cinfo->comp_info[i].quant_table->sent_table ? &PL_sv_yes : &PL_sv_no, 0 );
+			quantval = newAV();
+			av_extend(quantval, DCTSIZE2 - 1);
+			for (j = 0; j < DCTSIZE2; j++)
+				av_push(quantval, newSVuv(cinfo->comp_info[i].quant_table->quantval[j]));
+			hv_store(quant_table, "quantval", 8,
+				newRV_noinc((SV *)quantval), 0);
+			hv_store(comp_info, "quant_table", 11, newRV_noinc( (SV*) quant_table ), 0);
+		}
+		/* void * dct_table; */
+		PUSHs( sv_2mortal( newRV_noinc((SV*)comp_info) ));
+	}
 
 #if JPEG_LIB_VERSION >= 80
 bool
@@ -1401,7 +1498,7 @@ PREINIT:
 PPCODE:
 	EXTEND(SP, NUM_ARITH_TBLS);
 	for (i = 0; i < NUM_ARITH_TBLS; i++)
-		PUSHs( newSVuv(cinfo->arith_dc_L[i]) );
+		PUSHs( sv_2mortal( newSVuv(cinfo->arith_dc_L[i]) ) );
 
 void
 get_arith_dc_U(Image::JPEG::Libjpeg::Decompress cinfo)
@@ -1410,7 +1507,7 @@ PREINIT:
 PPCODE:
 	EXTEND(SP, NUM_ARITH_TBLS);
 	for (i = 0; i < NUM_ARITH_TBLS; i++)
-		PUSHs( newSVuv(cinfo->arith_dc_U[i]) );
+		PUSHs( sv_2mortal( newSVuv(cinfo->arith_dc_U[i]) ) );
 
 void
 get_arith_ac_K(Image::JPEG::Libjpeg::Decompress cinfo)
@@ -1419,7 +1516,7 @@ PREINIT:
 PPCODE:
 	EXTEND(SP, NUM_ARITH_TBLS);
 	for (i = 0; i < NUM_ARITH_TBLS; i++)
-		PUSHs( newSVuv(cinfo->arith_ac_K[i]) );
+		PUSHs( sv_2mortal( newSVuv(cinfo->arith_ac_K[i]) ) );
 
 unsigned int
 get_restart_interval(Image::JPEG::Libjpeg::Decompress cinfo)
@@ -1501,18 +1598,16 @@ CODE:
 	RETVAL = cinfo->CCIR601_sampling;
 OUTPUT:	RETVAL
 
+=pod
 #if JPEG_LIB_VERSION >= 62
-#jpeg_saved_marker_ptr
-#get_marker_list(Image::JPEG::Libjpeg::Decompress cinfo)
-#CODE:
-#	RETVAL = cinfo->marker_list;
-#OUTPUT:#	RETVAL
+jpeg_saved_marker_ptr
+get_marker_list(Image::JPEG::Libjpeg::Decompress cinfo)
+CODE:
+	RETVAL = cinfo->marker_list;
+OUTPUT:	RETVAL
 
 #endif
-
- # ###########################################################################
- # DECOMPRESSOR-SPECIFIC FIELDS
- # ###########################################################################
+=cut
 
  # ###########################################################################
  # Computed during decompression startup
@@ -1601,13 +1696,14 @@ CODE:
 	RETVAL = cinfo->blocks_in_MCU;
 OUTPUT:	RETVAL
 
-=pod
-int
-get_MCU_membership[D_MAX_BLOCKS_IN_MCU](Image::JPEG::Libjpeg::Decompress cinfo)
-CODE:
-	RETVAL = cinfo->MCU_membership[D_MAX_BLOCKS_IN_MCU];
-OUTPUT:	RETVAL
-=cut
+void
+get_MCU_membership(Image::JPEG::Libjpeg::Decompress cinfo)
+PREINIT:
+	int i;
+PPCODE:
+	EXTEND(SP, D_MAX_BLOCKS_IN_MCU);
+	for (i = 0; i < D_MAX_BLOCKS_IN_MCU; i ++)
+		PUSHs( sv_2mortal( newSViv(cinfo->MCU_membership[i]) ));
 
 int
 get_Ss(Image::JPEG::Libjpeg::Decompress cinfo)
@@ -1642,16 +1738,17 @@ OUTPUT:	RETVAL
 
 #endif
 
-=pod
 #if JPEG_LIB_VERSION >= 80
-const int *
+void
 get_natural_order(Image::JPEG::Libjpeg::Decompress cinfo)
-CODE:
-	RETVAL = cinfo->natural_order;
-OUTPUT:	RETVAL
+PREINIT:
+	int i;
+PPCODE:
+	EXTEND(SP, cinfo->lim_Se);
+	for (i = 0; i < cinfo->lim_Se; i ++)
+		PUSHs( sv_2mortal( newSViv(cinfo->natural_order[i]) ));
 
 #endif
-=cut
 
 #if JPEG_LIB_VERSION >= 80
 int
@@ -1669,7 +1766,6 @@ CODE:
 OUTPUT:	RETVAL
 
  # ###########################################################################
- # DECOMPRESSION FUNCTIONS AND OBJECT
  # Decompress functions
 
 Image::JPEG::Libjpeg::Decompress
@@ -1704,7 +1800,7 @@ jpeg_mem_src (Image::JPEG::Libjpeg::Decompress cinfo, unsigned char * in, int le
 #endif
 
 int
-jpeg_read_header (Image::JPEG::Libjpeg::Decompress cinfo, bool require_image = true)
+jpeg_read_header (Image::JPEG::Libjpeg::Decompress cinfo, bool require_image = 1)
 
 bool
 jpeg_start_decompress (Image::JPEG::Libjpeg::Decompress cinfo)
@@ -1720,9 +1816,9 @@ PPCODE:
 	row_stride = cinfo->output_width * cinfo->output_components;
 	for (i=0; i<max_lines; i++)
 		Newx(scanlines[i], row_stride, JSAMPLE);
-	//
+	/* */
 	read_lines = jpeg_read_scanlines(cinfo, scanlines, max_lines);
-	//
+	/* */
 	EXTEND(SP, read_lines);
 	for (i=0; i<max_lines; i++)
 	{
@@ -1735,9 +1831,8 @@ PPCODE:
 bool
 jpeg_finish_decompress (Image::JPEG::Libjpeg::Decompress cinfo)
 
-=pod
 void
-jpeg_read_raw_data (Image::JPEG::Libjpeg::Decompress cinfo, JDIMENSION max_lines)
+jpeg_read_raw_data (Image::JPEG::Libjpeg::Decompress cinfo, JDIMENSION max_lines = 1)
 PREINIT:
 	JSAMPIMAGE data;
 	JDIMENSION i, j, k, read_lines;
@@ -1759,9 +1854,9 @@ PPCODE:
 			fprintf(stderr, " . . width %d\n", j);
 		}
 	}
-	//
+	/* */
 	read_lines = jpeg_read_raw_data(cinfo, data, max_lines);
-	//
+	/* */
 	EXTEND(SP, cinfo->output_components);
 	for (i=0; i<cinfo->output_components; i++)
 	{
@@ -1769,20 +1864,12 @@ PPCODE:
 		av_extend(image, cinfo->comp_info[i].v_samp_factor * DCTSIZE - 1);
 		for (j=0; j< cinfo->comp_info[i].v_samp_factor * DCTSIZE; j++)
 		{
-			row = newAV();
-			av_extend(row,  cinfo->comp_info[i].h_samp_factor * DCTSIZE - 1);
-			for (k=0; k< cinfo->comp_info[i].h_samp_factor * DCTSIZE; k ++)
-			{
-				av_push(row, newSViv(data[i][j][k]));
-			}
-			av_push(image, newRV_inc(sv_2mortal((SV*)row)));
+			av_push(image, sv_2mortal(newSVpv((char *)data[i][j], cinfo->comp_info[i].h_samp_factor * DCTSIZE * sizeof(JSAMPLE))) );
 			Safefree(data[i][j]);
 		}
-		PUSHs( newRV_noinc(sv_2mortal((SV*)image) ) );
 		Safefree(data[i]);
 	}
 	Safefree(data);
-=cut
 
 bool
 jpeg_has_multiple_scans (Image::JPEG::Libjpeg::Decompress cinfo)

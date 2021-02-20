@@ -36,6 +36,7 @@ use Image::JPEG::Libjpeg;
 
 # this script does some of these
 
+#########################
 # Helper functions
 sub read_bytes {
   my ($fp, $count) = @_;
@@ -127,7 +128,7 @@ sub read_bmp
   die "Filesize $fileSize seems incorrect" unless $fileSize = -s $filename;
 
   # INFOHEADER
-  my ($headerSize, $width, $height, $planes, $bpp, $compression, $imageSize, $colors) = 
+  my ($headerSize, $width, $height, $planes, $bpp, $compression, $imageSize, $colors) =
     unpack "VVVvvVVx4x4Vx4", read_bytes($fp, 40);
   die "headerSize $headerSize seems wrong" unless $headerSize == 0x28;
   die "Too many planes ($planes)" unless $planes == 1;
@@ -162,6 +163,8 @@ sub read_bmp
   return (\@image, \@palette);
 }
 
+#########################
+
 sub cjpeg
 {
   my $image = shift;
@@ -189,6 +192,8 @@ sub cjpeg
   return $filename;
 }
 
+#########################
+
 sub djpeg
 {
   my ($filename, $params) = @_;
@@ -209,6 +214,7 @@ sub djpeg
     $cinfo->set_quantize_colors(1);
   }
   $cinfo->set_dct_method(Image::JPEG::Libjpeg::JDCT_ISLOW);
+
   $cinfo->start_decompress();
   my @image;
   while ($cinfo->get_output_scanline() < $cinfo->get_output_height()) {
@@ -216,6 +222,7 @@ sub djpeg
     push @image, @scanline;
   }
   $cinfo->finish_decompress();
+
   close($infile);
 
   if ($params && $params eq 'quantize') {
@@ -224,6 +231,8 @@ sub djpeg
   }
   return \@image;
 }
+
+#########################
 
 my $ppm = read_ppm('t/testimg.ppm');
 # TEST 1
@@ -238,7 +247,7 @@ my $ppm = read_ppm('t/testimg.ppm');
 # TEST 2
 #        ./djpeg -dct int -gif -outfile testout.gif testorig.jpg
 #        cmp testimg.gif testout.gif
-# SKIPPED, we do not care about gif suppor
+# SKIPPED, we do not care about gif support
 
 # TEST 3
 {
