@@ -51,6 +51,38 @@ static HV * get_JQUANT_TBL(pTHX_ JQUANT_TBL * jquant_tbl)
 	return hv;
 }
 
+/* Convert a Perl hash to a JQUANT_TBL struct */
+static JQUANT_TBL * set_JQUANT_TBL(pTHX_ HV * hv)
+{
+	JQUANT_TBL * jquant_tbl;
+	SV ** elem;
+
+	AV * av;
+	int i;
+
+	Newx(jquant_tbl, 1, JQUANT_TBL);
+
+	elem = hv_fetch(hv, "sent_table", 10, 0);
+	if (elem != NULL && SvOK(*elem) && SvIOK(*elem))
+		jquant_tbl->sent_table = SvIV(*elem);
+
+	elem = hv_fetch(hv, "quantval", 8, 0);
+	if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+	{
+		av = (AV*) SvRV(*elem);
+
+		for (i = 0; i < DCTSIZE2; i++)
+		{
+			elem = av_fetch(av, i, 0);
+			if (elem != NULL && SvOK(*elem) && SvUOK(*elem))
+				jquant_tbl->quantval[i] = SvUV(*elem);
+		}
+	}
+
+	return jquant_tbl;
+}
+
+/* Convert a JHUFF_TBL struct to a Perl hash */
 static HV * get_JHUFF_TBL(pTHX_ JHUFF_TBL * jhuff_tbl)
 {
 	HV * hv;
@@ -75,6 +107,50 @@ static HV * get_JHUFF_TBL(pTHX_ JHUFF_TBL * jhuff_tbl)
 	return hv;
 }
 
+/* Convert a Perl hash to a JHUFF_TBL struct */
+static JHUFF_TBL * set_JHUFF_TBL(pTHX_ HV * hv)
+{
+	JHUFF_TBL * jhuff_tbl;
+	SV ** elem;
+
+	AV * av;
+	int i;
+
+	Newx(jhuff_tbl, 1, JHUFF_TBL);
+
+	elem = hv_fetch(hv, "sent_table", 10, 0);
+	if (elem != NULL && SvOK(*elem) && SvIOK(*elem))
+		jhuff_tbl->sent_table = SvIV(*elem);
+
+	elem = hv_fetch(hv, "bits", 4, 0);
+	if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+	{
+		av = (AV*) SvRV(*elem);
+
+		for (i = 0; i < 16; i++)
+		{
+			elem = av_fetch(av, i, 0);
+			if (elem != NULL && SvOK(*elem) && SvUOK(*elem))
+				jhuff_tbl->bits[i+1] = SvUV(*elem);
+		}
+	}
+
+	elem = hv_fetch(hv, "huffval", 7, 0);
+	if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+	{
+		av = (AV*) SvRV(*elem);
+
+		for (i = 0; i < 256; i++)
+		{
+			elem = av_fetch(av, i, 0);
+			if (elem != NULL && SvOK(*elem) && SvUOK(*elem))
+				jhuff_tbl->huffval[i] = SvUV(*elem);
+		}
+	}
+
+	return jhuff_tbl;
+}
+
 /* Convert a jpeg_component_info struct to a Perl hash */
 static HV * get_jpeg_component_info(pTHX_ jpeg_component_info * comp_info)
 {
@@ -89,6 +165,7 @@ static HV * get_jpeg_component_info(pTHX_ jpeg_component_info * comp_info)
 	hv_store(hv, "quant_tbl_no", 12, newSViv(comp_info->quant_tbl_no), 0);
 	hv_store(hv, "dc_tbl_no", 9, newSViv(comp_info->dc_tbl_no), 0);
 	hv_store(hv, "ac_tbl_no", 9, newSViv(comp_info->ac_tbl_no), 0);
+
 	hv_store(hv, "width_in_blocks", 15, newSVuv(comp_info->ac_tbl_no), 0);
 	hv_store(hv, "height_in_blocks", 16, newSVuv(comp_info->ac_tbl_no), 0);
 
@@ -110,9 +187,57 @@ static HV * get_jpeg_component_info(pTHX_ jpeg_component_info * comp_info)
 	if ( comp_info->quant_table != NULL)
 		hv_store(hv, "quant_table", 11, newRV_noinc( (SV*) get_JQUANT_TBL(aTHX_ comp_info->quant_table ) ), 0);
 
+	/* Private per-component storage for DCT or IDCT subsystem. */
 	/* void * dct_table; */
 
 	return hv;
+}
+
+/* Convert a Perl hash to a jpeg_component_info struct */
+static jpeg_component_info * set_jpeg_component_info(pTHX_ HV * hv)
+{
+	jpeg_component_info * comp_info;
+	SV ** elem;
+
+	Newx(comp_info, 1, jpeg_component_info);
+
+#define jpeg_comp_iv(x) elem = hv_fetch(hv, #x, strlen( #x ), 0); if (elem != NULL && SvOK(*elem) && SvIOK(*elem)) comp_info->x = SvIV(*elem);
+#define jpeg_comp_uv(x) elem = hv_fetch(hv, #x, strlen( #x ), 0); if (elem != NULL && SvOK(*elem) && SvUOK(*elem)) comp_info->x = SvUV(*elem);
+
+	jpeg_comp_iv( component_id );
+	jpeg_comp_iv( component_index );
+	jpeg_comp_iv( h_samp_factor );
+	jpeg_comp_iv( v_samp_factor );
+	jpeg_comp_iv( quant_tbl_no );
+	jpeg_comp_iv( dc_tbl_no );
+	jpeg_comp_iv( ac_tbl_no );
+
+	jpeg_comp_uv( width_in_blocks );
+	jpeg_comp_uv( height_in_blocks );
+
+	jpeg_comp_iv( DCT_h_scaled_size );
+	jpeg_comp_iv( DCT_v_scaled_size );
+
+	jpeg_comp_uv( downsampled_width );
+	jpeg_comp_uv( downsampled_height );
+
+	jpeg_comp_iv( component_needed ); // boolean
+
+	jpeg_comp_iv( MCU_width );
+	jpeg_comp_iv( MCU_height );
+	jpeg_comp_iv( MCU_blocks );
+	jpeg_comp_iv( MCU_sample_width );
+	jpeg_comp_iv( last_col_width );
+	jpeg_comp_iv( last_row_height );
+
+	elem = hv_fetch(hv, "quant_table", 11, 0);
+	if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+		comp_info->quant_table = set_JQUANT_TBL(aTHX_ SvRV(*elem));
+
+	/* Private per-component storage for DCT or IDCT subsystem. */
+	/* void * dct_table; */
+
+	return comp_info;
 }
 
 /* BEGIN XS CODE */
@@ -429,13 +554,17 @@ PPCODE:
 		else
 			PUSHs( sv_2mortal( newRV_noinc( (SV *) get_JQUANT_TBL(aTHX_ cinfo->quant_tbl_ptrs[i]) ) ) );
 
-=pod
 void
-set_quant_tbl_ptrs[NUM_QUANT_TBLS] (Image::JPEG::Libjpeg::Compress cinfo, JQUANT_TBL * quant_tbl_ptrs[NUM_QUANT_TBLS])
-CODE:
-	cinfo->quant_tbl_ptrs[NUM_QUANT_TBLS] = quant_tbl_ptrs[NUM_QUANT_TBLS];
-
-=cut
+set_quant_tbls (Image::JPEG::Libjpeg::Compress cinfo, AV * quant_tbls)
+PREINIT:
+	int i;
+	SV ** elem;
+PPCODE:
+	for (i = 0; i<NUM_QUANT_TBLS; i++) {
+		elem = av_fetch(quant_tbls, i, 0);
+		if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+			cinfo->quant_tbl_ptrs[i] = set_JQUANT_TBL( aTHX_ SvRV(*elem) );
+	}
 
 #if JPEG_LIB_VERSION >= 70
 void
@@ -455,9 +584,8 @@ PREINIT:
 PPCODE:
 	for (i = 0; i<NUM_QUANT_TBLS; i++) {
 		elem = av_fetch(q_scale_factor, i, 0);
-		if (elem == NULL || ! SvOK(*elem) || ! SvIOK(*elem))
-			croak("param is not set (is null)");
-		cinfo->q_scale_factor[i] = SvIV(*elem);
+		if (elem != NULL && SvOK(*elem) && SvIOK(*elem))
+			cinfo->q_scale_factor[i] = SvIV(*elem);
 	}
 
 #endif
@@ -466,9 +594,7 @@ PPCODE:
 void
 get_dc_huff_tbls(Image::JPEG::Libjpeg::Compress cinfo)
 PREINIT:
-	AV * av;
-	HV * jhuff_tbl;
-	int i, j;
+	int i;
 PPCODE:
 	EXTEND(SP, NUM_HUFF_TBLS);
 	for (i = 0; i < NUM_HUFF_TBLS; i++)
@@ -477,21 +603,24 @@ PPCODE:
 		else
 			PUSHs( sv_2mortal( newRV_noinc( (SV *) get_JHUFF_TBL(aTHX_ cinfo->dc_huff_tbl_ptrs[i]) ) ) );
 
-=pod
 void
-set_dc_huff_tbl_ptrs[NUM_HUFF_TBLS] (Image::JPEG::Libjpeg::Compress cinfo, JHUFF_TBL * dc_huff_tbl_ptrs[NUM_HUFF_TBLS])
-CODE:
-	cinfo->dc_huff_tbl_ptrs[NUM_HUFF_TBLS] = dc_huff_tbl_ptrs[NUM_HUFF_TBLS];
+set_dc_huff_tbl_ptrs (Image::JPEG::Libjpeg::Compress cinfo, AV * dc_huff_tbls)
+PREINIT:
+	SV ** elem;
+	int i;
+PPCODE:
+	for (i = 0; i<NUM_HUFF_TBLS; i++) {
+		elem = av_fetch(dc_huff_tbls, i, 0);
+		if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+			cinfo->dc_huff_tbl_ptrs[i] = set_JHUFF_TBL( aTHX_ SvRV(*elem) );
+	}
 
-=cut
 
 # TODO: TEST THIS
 void
 get_ac_huff_tbls(Image::JPEG::Libjpeg::Compress cinfo)
 PREINIT:
-	AV * av;
-	HV * jhuff_tbl;
-	int i, j;
+	int i;
 PPCODE:
 	EXTEND(SP, NUM_HUFF_TBLS);
 	for (i = 0; i < NUM_HUFF_TBLS; i++)
@@ -500,49 +629,17 @@ PPCODE:
 		else
 			PUSHs( sv_2mortal( newRV_noinc( (SV *) get_JHUFF_TBL(aTHX_ cinfo->ac_huff_tbl_ptrs[i]) ) ) );
 
-=pod
 void
-set_ac_huff_tbls (Image::JPEG::Libjpeg::Compress cinfo, AV * ac_huff_tbls)
+set_ac_huff_tbl_ptrs (Image::JPEG::Libjpeg::Compress cinfo, AV * ac_huff_tbls)
 PREINIT:
-	int i, j;
 	SV ** elem;
-	AV * av;
-	HV * jhuff_tbl;
+	int i;
 PPCODE:
-	for (i = 0; i < NUM_HUFF_TBLS; i ++) {
+	for (i = 0; i<NUM_HUFF_TBLS; i++) {
 		elem = av_fetch(ac_huff_tbls, i, 0);
-		if (elem == NULL || ! SvOK(*elem) || ! SvROK(*elem))
-			croak("param is not set (is null)");
-		jhuff_tbl = SvRV(*elem);
-		/* */
-		elem = hv_fetch(jhuff_tbl, "sent_table", 10, 0);
-		if (elem == NULL || ! SvOK(*elem) || ! SvIOK(*elem))
-			croak("sent_table is not set (is null)");
-		cinfo->ac_huff_tbl_ptrs[i]->sent_table = SvRV(*elem);
-		/* */
-		elem = hv_fetch(jhuff_tbl, "bits", 4, 0);
-		if (elem == NULL || ! SvOK(*elem) || ! SvROK(*elem))
-			croak("bits is not set (is null)");
-		av = SvRV(*elem);
-		for (j = 0; j < 16; j ++) {
-			elem = av_fetch(av, i, 0);
-			if (elem == NULL || ! SvOK(*elem) || ! SvIOK(*elem))
-				croak("bits[j] is not set (is null)");
-			cinfo->ac_huff_tbl_ptrs[i]->bits[j+1] = SvRV(*elem);
-		}
-		/* */
-		elem = hv_fetch(jhuff_tbl, "huffval", 7, 0);
-		if (elem == NULL || ! SvOK(*elem) || ! SvROK(*elem))
-			croak("huffval is not set (is null)");
-		av = SvRV(*elem);
-		for (j = 0; j < 256; j ++) {
-			elem = av_fetch(av, i, 0);
-			if (elem == NULL || ! SvOK(*elem) || ! SvIOK(*elem))
-				croak("huffval[j] is not set (is null)");
-			cinfo->ac_huff_tbl_ptrs[i]->huffval[j] = SvRV(*elem);
-		}
+		if (elem != NULL && SvOK(*elem) && SvROK(*elem))
+			cinfo->ac_huff_tbl_ptrs[i] = set_JHUFF_TBL( aTHX_ SvRV(*elem) );
 	}
-=cut
 
 void
 get_arith_dc_L(Image::JPEG::Libjpeg::Compress cinfo)
@@ -553,13 +650,18 @@ PPCODE:
 	for (i = 0; i < NUM_ARITH_TBLS; i++)
 		PUSHs( sv_2mortal( newSVuv(cinfo->arith_dc_L[i]) ) );
 
-=pod
 void
-set_arith_dc_L[NUM_ARITH_TBLS] (Image::JPEG::Libjpeg::Compress cinfo, UINT8 arith_dc_L[NUM_ARITH_TBLS])
-CODE:
-	cinfo->arith_dc_L[NUM_ARITH_TBLS] = arith_dc_L[NUM_ARITH_TBLS];
+set_arith_dc_L(Image::JPEG::Libjpeg::Compress cinfo, AV * arith_dc_L)
+PREINIT:
+	SV ** elem;
+	int i;
+PPCODE:
+	for (i = 0; i<NUM_ARITH_TBLS; i++) {
+		elem = av_fetch(arith_dc_L, i, 0);
+		if (elem != NULL && SvOK(*elem) && SvUOK(*elem))
+			cinfo->arith_dc_L[i] = SvUV(*elem);
+	}
 
-=cut
 
 void
 get_arith_dc_U(Image::JPEG::Libjpeg::Compress cinfo)
@@ -570,13 +672,17 @@ PPCODE:
 	for (i = 0; i < NUM_ARITH_TBLS; i++)
 		PUSHs( sv_2mortal( newSVuv(cinfo->arith_dc_U[i]) ) );
 
-=pod
 void
-set_arith_dc_U[NUM_ARITH_TBLS] (Image::JPEG::Libjpeg::Compress cinfo, UINT8 arith_dc_U[NUM_ARITH_TBLS])
-CODE:
-	cinfo->arith_dc_U[NUM_ARITH_TBLS] = arith_dc_U[NUM_ARITH_TBLS];
-
-=cut
+set_arith_dc_U(Image::JPEG::Libjpeg::Compress cinfo, AV * arith_dc_U)
+PREINIT:
+	SV ** elem;
+	int i;
+PPCODE:
+	for (i = 0; i<NUM_ARITH_TBLS; i++) {
+		elem = av_fetch(arith_dc_U, i, 0);
+		if (elem != NULL && SvOK(*elem) && SvUOK(*elem))
+			cinfo->arith_dc_U[i] = SvUV(*elem);
+	}
 
 void
 get_arith_ac_K(Image::JPEG::Libjpeg::Compress cinfo)
@@ -587,13 +693,17 @@ PPCODE:
 	for (i = 0; i < NUM_ARITH_TBLS; i++)
 		PUSHs( sv_2mortal( newSVuv(cinfo->arith_ac_K[i]) ) );
 
-=pod
 void
-set_arith_ac_K[NUM_ARITH_TBLS] (Image::JPEG::Libjpeg::Compress cinfo, UINT8 arith_ac_K[NUM_ARITH_TBLS])
-CODE:
-	cinfo->arith_ac_K[NUM_ARITH_TBLS] = arith_ac_K[NUM_ARITH_TBLS];
-
-=cut
+set_arith_ac_K(Image::JPEG::Libjpeg::Compress cinfo, AV * arith_ac_K)
+PREINIT:
+	SV ** elem;
+	int i;
+PPCODE:
+	for (i = 0; i<NUM_ARITH_TBLS; i++) {
+		elem = av_fetch(arith_ac_K, i, 0);
+		if (elem != NULL && SvOK(*elem) && SvUOK(*elem))
+			cinfo->arith_ac_K[i] = SvUV(*elem);
+	}
 
 int
 get_num_scans (Image::JPEG::Libjpeg::Compress cinfo)
@@ -913,13 +1023,16 @@ set_blocks_in_MCU (Image::JPEG::Libjpeg::Compress cinfo, int blocks_in_MCU)
 CODE:
 	cinfo->blocks_in_MCU = blocks_in_MCU;
 
-=pod
-int
-get_MCU_membership[C_MAX_BLOCKS_IN_MCU] (Image::JPEG::Libjpeg::Compress cinfo)
-CODE:
-	RETVAL = cinfo->MCU_membership[C_MAX_BLOCKS_IN_MCU];
-OUTPUT:	RETVAL
+void
+get_MCU_membership(Image::JPEG::Libjpeg::Compress cinfo)
+PREINIT:
+	int i;
+PPCODE:
+	EXTEND(SP, D_MAX_BLOCKS_IN_MCU);
+	for (i = 0; i < D_MAX_BLOCKS_IN_MCU; i ++)
+		PUSHs( sv_2mortal( newSViv(cinfo->MCU_membership[i]) ));
 
+=pod
 void
 set_MCU_membership[C_MAX_BLOCKS_IN_MCU] (Image::JPEG::Libjpeg::Compress cinfo, int MCU_membership[C_MAX_BLOCKS_IN_MCU])
 CODE:
@@ -990,13 +1103,6 @@ PPCODE:
 	EXTEND(SP, cinfo->lim_Se);
 	for (i = 0; i < cinfo->lim_Se; i ++)
 		PUSHs( sv_2mortal( newSViv(cinfo->natural_order[i]) ));
-
-=pod
-void
-set_natural_order (Image::JPEG::Libjpeg::Compress cinfo, const int * natural_order)
-CODE:
-	cinfo->natural_order = natural_order;
-=cut
 
 int
 get_lim_Se (Image::JPEG::Libjpeg::Compress cinfo)
