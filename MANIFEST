@@ -1,8 +1,0 @@
-Changes
-Libjpeg.xs
-Makefile.PL
-MANIFEST
-ppport.h
-README
-t/Image-JPEG-Libjpeg.t
-lib/Image/JPEG/Libjpeg.pm
